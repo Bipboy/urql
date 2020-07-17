@@ -38,6 +38,7 @@ import {
   StorageAdapter,
   Dependencies,
 } from './types';
+import { readFragment } from './operations/query';
 
 type OperationResultWithMeta = OperationResult & {
   outcome: CacheOutcome;
@@ -204,7 +205,13 @@ export const cacheExchange = (opts?: CacheExchangeOpts): Exchange => ({
   const operationResultFromCache = (
     operation: Operation
   ): OperationResultWithMeta => {
-    const res = query(store, operation);
+    let res;
+    if (operation.operationName === 'fragment') {
+      res = readFragment(store, operation.query, operation.variables || {});
+    } else {
+      res = query(store, operation);
+    }
+
     const cacheOutcome: CacheOutcome = res.data
       ? !res.partial
         ? 'hit'
@@ -286,8 +293,9 @@ export const cacheExchange = (opts?: CacheExchangeOpts): Exchange => ({
       inputOps$,
       filter(op => {
         return (
-          op.operationName === 'query' &&
-          op.context.requestPolicy !== 'network-only'
+          op.operationName === 'query' ||
+          (op.operationName === 'fragment' &&
+            op.context.requestPolicy !== 'network-only')
         );
       }),
       map(operationResultFromCache),

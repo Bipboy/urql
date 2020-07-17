@@ -291,6 +291,27 @@ export class Client {
     return result;
   }
 
+  executeFragment = <Data = any>(
+    fragment: GraphQLRequest,
+    opts?: Partial<OperationContext>
+  ): Source<OperationResult<Data>> => {
+    const operation = this.createRequestOperation('fragment', fragment, {
+      ...opts,
+      context: { ...(opts || {}).context, requestPolicy: 'cache-only' },
+    });
+    const response$ = this.executeRequestOperation(operation);
+    const { pollInterval } = operation.context;
+
+    if (pollInterval) {
+      return pipe(
+        merge([fromValue(0), interval(pollInterval)]),
+        switchMap(() => response$)
+      );
+    }
+
+    return response$;
+  };
+
   executeQuery = <Data = any>(
     query: GraphQLRequest,
     opts?: Partial<OperationContext>

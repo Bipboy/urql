@@ -10,7 +10,12 @@ export type PromisifiedSource<T = any> = Source<T> & {
 };
 
 /** The type of GraphQL operation being executed. */
-export type OperationType = 'subscription' | 'query' | 'mutation' | 'teardown';
+export type OperationType =
+  | 'subscription'
+  | 'query'
+  | 'fragment'
+  | 'mutation'
+  | 'teardown';
 
 /** The strategy that is used to request results from network and/or the cache. */
 export type RequestPolicy =
